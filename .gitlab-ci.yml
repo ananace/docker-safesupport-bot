@@ -14,11 +14,6 @@ image:version:
     - source "${CI_PROJECT_DIR}/version"
     - /kaniko/executor --context ${CI_PROJECT_DIR} --dockerfile Dockerfile $DOCKER_PROXY --build-arg "VERSION=$VERSION" --destination "${CI_REGISTRY_IMAGE}:${IMAGE_VERSION:-VERSION}"
 
-image:latest:
-  extends: image:version
-  variables:
-    IMAGE_VERSION: latest
-
 promote:version:
   stage: promote
   image: ananace/skopeo
