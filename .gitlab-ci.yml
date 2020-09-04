@@ -1,0 +1,54 @@
+---
+stages:
+  - build
+  - promote
+
+.image:
+  stage: build
+  image:
+    name: gcr.io/kaniko-project/executor:debug
+    entrypoint: []
+  script:
+    - mkdir -p /root/.docker
+    - echo "{\"auths\":{\"${CI_REGISTRY}\":{\"username\":\"${CI_REGISTRY_USER}\",\"password\":\"${CI_JOB_TOKEN}\"}}}" > /root/.docker/config.json
+    - /kaniko/executor --context ${CI_PROJECT_DIR} --dockerfile Dockerfile $DOCKER_PROXY --build-arg "VERSION=$VERSION" --destination "${CI_REGISTRY_IMAGE}:${IMAGE_VERSION:-VERSION}"
+  only:
+    refs:
+      - master
+    variables:
+      - $VERSION
+
+image:version:
+  extends: .image
+
+# image:latest:
+#   extends: .image
+#   variables:
+#     VERSION: master
+#     IMAGE_VERSION: latest
+
+.promote:
+  stage: promote
+  image: ${CI_REGISTRY_IMAGE}:latest
+  script:
+    - /skopeo copy --src-creds "${CI_REGISTRY_USER}:${CI_JOB_TOKEN}" --dest-creds "${PROMOTE_USER}:${PROMOTE_PASS}" "docker://${CI_REGISTRY_IMAGE}:${VERSION}" "docker://${PROMOTE_IMAGE}:${PROMOTE_VERSION:-$VERSION}"
+  variables:
+    GIT_STRATEGY: none
+  only:
+    refs:
+      - master
+    variables:
+      - $PROMOTE_USER
+      - $PROMOTE_PASS
+      - $PROMOTE_REGISTRY
+      - $PROMOTE_IMAGE
+      - $VERSION
+
+promote:version:
+  extends: .promote
+
+promote:latest:
+  extends: .promote
+  variables:
+    VERSION: latest
+  when: manual
