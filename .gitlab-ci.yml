@@ -35,6 +35,6 @@ promote:version:
       - $PROMOTE_IMAGE
 
 promote:latest:
-  extends: promote
+  extends: promote:version
   variables:
     PROMOTE_VERSION: latest
