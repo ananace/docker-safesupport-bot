@@ -3,7 +3,7 @@ stages:
   - build
   - promote
 
-image:
+image:version:
   stage: build
   image:
     name: gcr.io/kaniko-project/executor:debug
@@ -13,16 +13,13 @@ image:
     - echo "{\"auths\":{\"${CI_REGISTRY}\":{\"username\":\"${CI_REGISTRY_USER}\",\"password\":\"${CI_JOB_TOKEN}\"}}}" > /root/.docker/config.json
     - source "${CI_PROJECT_DIR}/version"
     - /kaniko/executor --context ${CI_PROJECT_DIR} --dockerfile Dockerfile $DOCKER_PROXY --build-arg "VERSION=$VERSION" --destination "${CI_REGISTRY_IMAGE}:${IMAGE_VERSION:-VERSION}"
-  only:
-    refs:
-      - master@serverdrift-projs/safesupport-bot
 
 image:latest:
-  extends: image
+  extends: image:version
   variables:
     IMAGE_VERSION: latest
 
-promote:
+promote:version:
   stage: promote
   image: ananace/skopeo
   script:
